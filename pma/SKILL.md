@@ -1,256 +1,150 @@
 ---
 name: pma
-description: Project development lifecycle management with a strict three-phase workflow (investigate -> proposal -> implement), file-based plan tracking in docs/plan/, task tracking in docs/task/, and claim-before-work multi-agent coordination. Use when handling feature development, bug fixes, refactors, planning, progress tracking, or multi-agent execution in an existing codebase. Supports English and Chinese project templates.
+description: 项目开发生命周期管理，三阶段工作流（调查 → 方案 → 实现），文件化方案/任务追踪，多 Agent 协作支持。用于功能开发、Bug 修复、重构、进度追踪等场景。
 ---
 
-# PMA - Project Management Assistant
+# PMA - 项目管理助手
 
-Run delivery work with clear gates, minimal diffs, and explicit task/plan tracking.
+以明确的阶段门控、最小化改动、文件化任务/方案追踪驱动交付工作。
 
-## Hard Rules
+## 硬性规则
 
-1. Use one project content language for docs, task files, and commit messages (follow user preference, otherwise follow existing project language).
-2. Read before write: inspect call chains, related config/tests, and recent changelog context before editing logic.
-3. Make only the minimal requested changes; do not add unrequested refactors or features.
-4. Never use plan mode (`EnterPlanMode`, `mode: "plan"`). Manage plans in `docs/plan/` files only.
-5. Do not implement before explicit confirmation (`proceed`).
-6. Use English filenames only, even when project content is Chinese (for example: `architecture.md`, `changelog.md`).
+1. 文档、任务文件、commit message 使用中文。文件名使用英文。
+2. 先读后写：修改逻辑前必须检查调用链、相关配置/测试、最近的 changelog。
+3. 只做请求的最小改动，不添加未请求的重构或功能。
+4. 不使用 plan mode（`EnterPlanMode`），方案管理在 `docs/plan/` 文件中。
+5. 未经明确确认（`proceed`）不得开始实现。
 
-## Three-Phase Workflow
+## 三阶段工作流
 
-### Phase 1: Investigation
+### 第一阶段：调查
 
-1. Trace upstream/downstream call chains, symbol references, and types.
-2. Search related code, config, tests, migrations, and docs.
-3. Read the tail of `docs/changelog.md` for recent context.
-4. Find or create the matching task in `docs/task/index.md` and claim it (`[-]`).
+1. 追踪上下游调用链、符号引用、类型定义。
+2. 搜索相关代码、配置、测试、迁移、文档。
+3. 读 `docs/changelog.md` 末尾了解近期上下文。
+4. 在 `docs/task/index.md` 中找到或创建对应任务并认领（`[-]`）。
 
-Non-trivial task rule:
-- If the change touches `>=3` files or crosses modules, create `docs/plan/PLAN-NNN.md` and write findings to the context section.
+非平凡任务规则：
+- 改动涉及 `>=3` 个文件或跨模块时，创建 `docs/plan/PLAN-NNN.md` 并将调查发现写入现状章节。
 
-### Phase 2: Proposal
+### 第二阶段：方案
 
-Output these items, then stop for approval:
-- Current state
-- Proposal
-- Risks
-- Scope
-- Alternatives (if multiple approaches exist)
+输出以下内容，然后停下等待确认：
+- 现状
+- 方案
+- 风险
+- 工作量
+- 备选方案（如有多种方案）
 
-For non-trivial tasks:
-- Complete remaining sections in `PLAN-NNN.md`.
-- Append one line to `docs/plan/index.md` with `[ ]`.
-- Wait for user annotations and address all of them before implementation.
+非平凡任务：
+- 完成 `PLAN-NNN.md` 的剩余章节。
+- 在 `docs/plan/index.md` 追加一行 `[ ]`。
+- 等待用户批注，处理完所有批注后才进入实现。
 
-### Phase 3: Implement -> Verify -> Record
+### 第三阶段：实现 → 验证 → 记录
 
-Only after approval:
+确认后执行：
 
-1. If a plan exists, set plan index marker to `[-]` and detail `status` to `implementing`.
-2. Implement step by step according to the approved proposal.
-3. Run focused self-verification.
-4. Set task index marker to `[x]` and task detail `status` to `completed`.
-5. If a plan exists, set plan index marker to `[x]` and plan detail `status` to `completed`.
-6. Update changelog as needed.
+1. 如有方案文件，设置方案索引标记为 `[-]`，详情 `status` 为 `implementing`。
+2. 按审批通过的方案逐步实现。
+3. 执行聚焦验证（编译、测试、部署验证等）。
+4. 设置任务索引标记为 `[x]`，详情 `status` 为 `completed`。
+5. 如有方案文件，设置方案索引标记为 `[x]`，详情 `status` 为 `completed`。
+6. 按需更新 changelog。
 
-## Task and Plan Files
+## 任务和方案文件
 
-Use these canonical references instead of redefining formats in-place:
+使用以下规范参考（不在此重复定义格式）：
 
-- Task format: [docs/task-format.md](docs/task-format.md)
-- Plan format: [docs/plan-format.md](docs/plan-format.md)
+- 任务格式：[docs/task-format.md](docs/task-format.md)
+- 方案格式：[docs/plan-format.md](docs/plan-format.md)
 
-Required structure:
+必需结构：
 
-- `docs/task/index.md`: one-line task entries
-- `docs/task/PREFIX-NNN.md`: task detail files
-- `docs/plan/index.md`: one-line plan entries
-- `docs/plan/PLAN-NNN.md`: plan detail files
+- `docs/task/index.md`：单行任务条目
+- `docs/task/PREFIX-NNN.md`：任务详情文件
+- `docs/plan/index.md`：单行方案条目
+- `docs/plan/PLAN-NNN.md`：方案详情文件
 
-## Claim-Before-Work (Multi-Agent Safety)
+## 认领机制（多 Agent 安全）
 
-Before writing any implementation code:
+在写任何实现代码之前：
 
-1. Read `docs/task/index.md`; for `[-]` items, read detail `owner`.
-2. If another agent owns the in-progress task, skip it.
-3. Claim atomically:
-   - Update task index `[ ] -> [-]`
-   - Update task detail `status -> in_progress`, set `owner`
-   - Call `TaskUpdate(status: "in_progress", owner: "<agent>")` if task tools are available
-4. Start implementation only after the claim is fully written.
+1. 读 `docs/task/index.md`；对于 `[-]` 项，读详情中的 `owner`。
+2. 如果其他 Agent 拥有进行中的任务，跳过。
+3. 原子认领：
+   - 更新任务索引 `[ ] -> [-]`
+   - 更新任务详情 `status -> in_progress`，设置 `owner`
+   - 如有 TaskUpdate 工具可用，调用 `TaskUpdate(status: "in_progress", owner: "<agent>")`
+4. 认领完全写入后才开始实现。
 
-On completion:
-- Set task index `[-] -> [x]`
-- Set task detail `status -> completed`
-- Call `TaskUpdate(status: "completed")` if task tools are available
+完成时：
+- 设置任务索引 `[-] -> [x]`
+- 设置任务详情 `status -> completed`
 
-On close/won't do:
-- Set task index to `[~]`
-- Set task detail `status -> closed` and record reason
-- Call `TaskUpdate(status: "deleted")` if task tools are available
+关闭/不做时：
+- 设置任务索引为 `[~]`
+- 设置任务详情 `status -> closed` 并记录原因
 
-## Sync Rules
+## 同步规则
 
-Task status updates are immediate, never deferred.
+任务状态更新立即执行，不延迟。
 
-- Primary source is files in `docs/task/` and `docs/plan/`.
-- If `TaskCreate`/`TaskUpdate` tools are available, keep tool state in sync with file state.
-- If task tools are unavailable, continue with file-only sync and state this in the progress update.
+- 主要来源是 `docs/task/` 和 `docs/plan/` 中的文件。
+- 如有 `TaskCreate`/`TaskUpdate` 工具可用，保持工具状态与文件状态同步。
+- 如任务工具不可用，仅使用文件同步，并在进度更新中说明。
 
-Session checklist:
-1. Session start: read `docs/task/index.md`, active task details, and `docs/plan/index.md`.
-2. New task: create detail file first, then append index line.
-3. Before work: complete Claim-Before-Work.
-4. Session end: verify statuses are written and update index header date.
+会话检查清单：
+1. 会话开始：读 `docs/task/index.md`、活跃任务详情、`docs/plan/index.md`。
+2. 新任务：先创建详情文件，再追加索引行。
+3. 开始工作前：完成认领流程。
+4. 会话结束：验证状态已写入，更新索引头部日期。
 
-## Documentation System
+## Changelog 规范
 
-Canonical structure:
-
-```text
-docs/
-├── task/
-│   ├── index.md
-│   └── PREFIX-NNN.md
-├── plan/
-│   ├── index.md
-│   └── PLAN-NNN.md
-├── architecture.md
-└── changelog.md
-```
-
-- Use English sections for English-language projects.
-- Use Chinese template sections for Chinese-language projects while keeping filenames in English.
-- Write investigation findings into the plan context section.
-- Do not create extra report files; temporary files go to `./tmp/`.
-
-## Changelog Conventions
-
-Entry format:
+条目格式：
 
 ```markdown
-## YYYY-MM-DD HH:MM [tag]
+## YYYY-MM-DD HH:MM [标签]
 
-[content]
+[内容]
 ```
 
-Recommended tags:
-- `[progress]`, `[BUG-P0]`, `[BUG-P1]`, `[pitfall]`, `[decision]`
+推荐标签：
+- `[进度]`、`[BUG-P0]`、`[BUG-P1]`、`[踩坑]`、`[决策]`
 
-## Project Initialization
+## 项目初始化
 
-On first use in a project:
+首次在项目中使用时：
 
-1. Ensure `CLAUDE.md` contains a `## Project Development` section that references `/pma` and the three-phase workflow.
-2. Ensure `AGENTS.md` contains the same section.
-3. Ensure `docs/task/index.md` exists (initialize from [docs/task-format.md](docs/task-format.md)).
-4. Ensure `docs/plan/index.md` exists (initialize from [docs/plan-format.md](docs/plan-format.md)).
-5. Ensure core docs exist (`architecture.md` + `changelog.md`), and keep content language aligned with the project.
+1. 确保 `docs/task/index.md` 存在（从 [docs/task-format.md](docs/task-format.md) 初始化）。
+2. 确保 `docs/plan/index.md` 存在（从 [docs/plan-format.md](docs/plan-format.md) 初始化）。
+3. 确保 `docs/changelog.md` 存在。
 
-## Shell and Process Management
+## PR 工作流
 
-- Prefer `bash` for all command execution; do not use `zsh` unless explicitly requested.
-- **ALWAYS** use tmux to run dev servers, test servers, and long-running processes.
-- Tmux session name: `{project_dir_basename}-{path_hash}` — generate with:
-  ```bash
-  echo $(basename "$PWD" | tr '.' '-')-$(echo -n "$PWD" | md5sum | cut -c1-6)
-  ```
-- **Before starting a server**: check `tmux has-session -t NAME` first — reuse or restart existing sessions.
-- **NEVER** use `kill $(lsof -ti:PORT)` without filtering — use `kill $(lsof -ti:PORT -sTCP:LISTEN)` or `fuser -k PORT/tcp` instead.
-- **NEVER** kill ports as the first approach — manage process lifecycle through tmux.
+### 创建 PR
 
-## Git Conventions
-
-- Follow project content language for commit messages, PR titles, PR descriptions, and all remote-visible metadata.
-- Do not mention AI assistants, agents, or collaborator model names (`Codex`, `Claude`, `ChatGPT`, `OpenAI`, `Anthropic`, etc.) in any remote-visible content.
-- Follow conventional commits format: `<type>: <描述>` (type in English: feat, fix, refactor, docs, test, chore, perf, ci; description follows project language).
-
-## Pull Request Workflow
-
-### Creating a PR
-
-1. Analyze **full** commit history from branch point, not just the latest commit.
-2. Use `git diff [base-branch]...HEAD` to review all changes.
-3. Title: under 70 characters, imperative mood.
-4. Body format:
+1. 分析从分支点开始的**完整** commit 历史，不仅是最新 commit。
+2. 使用 `git diff [base-branch]...HEAD` 审查所有改动。
+3. 标题：70 字符以内。
+4. Body 格式：
    ```
-   ## Summary
-   <1-3 bullet points>
+   ## 概要
+   <1-3 个要点>
 
-   ## Test plan
-   - [ ] <checklist items>
+   ## 测试计划
+   - [ ] <检查项>
    ```
-5. Push with `-u` flag if new branch.
+5. 新分支 push 时使用 `-u` 标志。
 
-### Auto-Review Before PR
+### PR 前自动审查
 
-Run these checks automatically before creating or updating a PR:
+创建或更新 PR 前自动执行：
 
-1. **Code review** — use **code-reviewer** agent on all changed files.
-2. **Security scan** — use **security-reviewer** agent:
-   - No hardcoded secrets (API keys, passwords, tokens)
-   - All user inputs validated
-   - No SQL injection, XSS, or CSRF vulnerabilities
-   - Error messages do not leak sensitive data
-3. **Build verification** — ensure `build` passes with no errors.
-4. **Lint** — ensure `lint` passes with no errors.
-5. **Tests** — run full test suite; verify no regressions.
+1. **代码审查** — 审查所有改动文件。
+2. **安全扫描** — 检查硬编码密钥、输入校验、注入漏洞、错误信息泄露。
+3. **构建验证** — 确保构建通过。
+4. **测试** — 运行测试套件，验证无回归。
 
-If any check fails, fix the issue before creating the PR. Do not skip checks with `--no-verify`.
-
-### PR Review Checklist
-
-Before marking a PR ready for review:
-
-- [ ] All auto-review checks pass (code review, security, build, lint, tests)
-- [ ] Commit history is clean (no WIP, fixup, or merge commits)
-- [ ] PR description accurately reflects all changes
-- [ ] Task status updated in `docs/task/index.md`
-- [ ] Plan status updated in `docs/plan/index.md` (if applicable)
-- [ ] Changelog updated (if user-facing change)
-
-## CI Pipeline
-
-### Standard Stages
-
-```
-lint → typecheck → build → test → security-scan
-```
-
-All stages must pass before a PR can be merged. Stages run in parallel where possible.
-
-### GitHub Actions Conventions
-
-- Workflow files in `.github/workflows/`.
-- Use `bun` for install and script execution.
-- Pin action versions to full SHA, not tags (e.g., `actions/checkout@<sha>`).
-- Cache `bun` dependencies with `actions/cache` keyed on `bun.lock`.
-- Run on: `pull_request` (target: main) and `push` (branch: main).
-
-### CI Jobs
-
-| Job | Command | Gate |
-|---|---|---|
-| Lint | `bun run lint` | Must pass, zero warnings |
-| Typecheck | `bun run typecheck` | Must pass |
-| Build | `bun run build` | Must succeed |
-| Test | `bun run test` | Must pass, 80%+ coverage |
-| Security | `bun run audit` or dedicated scan | No critical/high vulnerabilities |
-
-### CI Rules
-
-- **Never** skip CI checks to unblock a merge.
-- **Never** add `[skip ci]` to commit messages unless explicitly requested.
-- If CI fails, fix the root cause locally before pushing again — do not iterate by pushing repeated fix attempts.
-- Keep CI fast: target under 5 minutes for the full pipeline.
-- Secrets in CI use GitHub Actions secrets (`${{ secrets.XXX }}`), never hardcoded.
-- Use `gh run view` or `gh run watch` to check CI status from the terminal.
-
-## Tools and Security
-
-- Prefer semantic code navigation tools for architecture understanding.
-- Check official docs (e.g., Context7) before using third-party APIs.
-- Use code/web search tools for examples and troubleshooting when needed.
-- Verify UI behavior after UI edits.
-- Keep secrets in `.env`; never hardcode or log secrets.
-- Mark risky commands with an explicit warning comment.
+任何检查失败时先修复再创建 PR，不使用 `--no-verify` 跳过。
