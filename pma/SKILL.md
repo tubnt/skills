@@ -1,150 +1,151 @@
 ---
 name: pma
-description: 项目开发生命周期管理，三阶段工作流（调查 → 方案 → 实现），文件化方案/任务追踪，多 Agent 协作支持。用于功能开发、Bug 修复、重构、进度追踪等场景。
+description: Project development lifecycle management with a strict three-phase workflow (investigate -> proposal -> implement), file-based plan tracking in docs/plan/, task tracking in docs/task/, and claim-before-work multi-agent coordination. Use when handling feature development, bug fixes, refactors, planning, progress tracking, or multi-agent execution in an existing codebase.
 ---
 
-# PMA - 项目管理助手
+# PMA - Project Management Assistant
 
-以明确的阶段门控、最小化改动、文件化任务/方案追踪驱动交付工作。
+Run delivery work with clear gates, minimal diffs, and explicit task/plan tracking.
 
-## 硬性规则
+## Hard Rules
 
-1. 文档、任务文件、commit message 使用中文。文件名使用英文。
-2. 先读后写：修改逻辑前必须检查调用链、相关配置/测试、最近的 changelog。
-3. 只做请求的最小改动，不添加未请求的重构或功能。
-4. 不使用 plan mode（`EnterPlanMode`），方案管理在 `docs/plan/` 文件中。
-5. 未经明确确认（`proceed`）不得开始实现。
+1. All conversation output, generated documents, task files, plan files, commit messages, and PR content MUST be in Chinese. Skill definitions and config files stay in English.
+2. Use English filenames only (e.g. `architecture.md`, `changelog.md`).
+3. Read before write: inspect call chains, related config/tests, and recent changelog context before editing logic.
+4. Make only the minimal requested changes; do not add unrequested refactors or features.
+5. Never use plan mode (`EnterPlanMode`, `mode: "plan"`). Manage plans in `docs/plan/` files only.
+6. Do not implement before explicit confirmation (`proceed`).
 
-## 三阶段工作流
+## Three-Phase Workflow
 
-### 第一阶段：调查
+### Phase 1: Investigation
 
-1. 追踪上下游调用链、符号引用、类型定义。
-2. 搜索相关代码、配置、测试、迁移、文档。
-3. 读 `docs/changelog.md` 末尾了解近期上下文。
-4. 在 `docs/task/index.md` 中找到或创建对应任务并认领（`[-]`）。
+1. Trace upstream/downstream call chains, symbol references, and types.
+2. Search related code, config, tests, migrations, and docs.
+3. Read the tail of `docs/changelog.md` for recent context.
+4. Find or create the matching task in `docs/task/index.md` and claim it (`[-]`).
 
-非平凡任务规则：
-- 改动涉及 `>=3` 个文件或跨模块时，创建 `docs/plan/PLAN-NNN.md` 并将调查发现写入现状章节。
+Non-trivial task rule:
+- If the change touches `>=3` files or crosses modules, create `docs/plan/PLAN-NNN.md` and write findings to the context section.
 
-### 第二阶段：方案
+### Phase 2: Proposal
 
-输出以下内容，然后停下等待确认：
-- 现状
-- 方案
-- 风险
-- 工作量
-- 备选方案（如有多种方案）
+Output these items (in Chinese), then stop for approval:
+- Current state
+- Proposal
+- Risks
+- Scope
+- Alternatives (if multiple approaches exist)
 
-非平凡任务：
-- 完成 `PLAN-NNN.md` 的剩余章节。
-- 在 `docs/plan/index.md` 追加一行 `[ ]`。
-- 等待用户批注，处理完所有批注后才进入实现。
+For non-trivial tasks:
+- Complete remaining sections in `PLAN-NNN.md`.
+- Append one line to `docs/plan/index.md` with `[ ]`.
+- Wait for user annotations and address all of them before implementation.
 
-### 第三阶段：实现 → 验证 → 记录
+### Phase 3: Implement -> Verify -> Record
 
-确认后执行：
+Only after approval:
 
-1. 如有方案文件，设置方案索引标记为 `[-]`，详情 `status` 为 `implementing`。
-2. 按审批通过的方案逐步实现。
-3. 执行聚焦验证（编译、测试、部署验证等）。
-4. 设置任务索引标记为 `[x]`，详情 `status` 为 `completed`。
-5. 如有方案文件，设置方案索引标记为 `[x]`，详情 `status` 为 `completed`。
-6. 按需更新 changelog。
+1. If a plan exists, set plan index marker to `[-]` and detail `status` to `implementing`.
+2. Implement step by step according to the approved proposal.
+3. Run focused self-verification (compile, test, deploy verification, etc.).
+4. Set task index marker to `[x]` and task detail `status` to `completed`.
+5. If a plan exists, set plan index marker to `[x]` and plan detail `status` to `completed`.
+6. Update changelog as needed.
 
-## 任务和方案文件
+## Task and Plan Files
 
-使用以下规范参考（不在此重复定义格式）：
+Use these canonical references instead of redefining formats in-place:
 
-- 任务格式：[docs/task-format.md](docs/task-format.md)
-- 方案格式：[docs/plan-format.md](docs/plan-format.md)
+- Task format: [docs/task-format.md](docs/task-format.md)
+- Plan format: [docs/plan-format.md](docs/plan-format.md)
 
-必需结构：
+Required structure:
 
-- `docs/task/index.md`：单行任务条目
-- `docs/task/PREFIX-NNN.md`：任务详情文件
-- `docs/plan/index.md`：单行方案条目
-- `docs/plan/PLAN-NNN.md`：方案详情文件
+- `docs/task/index.md`: one-line task entries
+- `docs/task/PREFIX-NNN.md`: task detail files
+- `docs/plan/index.md`: one-line plan entries
+- `docs/plan/PLAN-NNN.md`: plan detail files
 
-## 认领机制（多 Agent 安全）
+## Claim-Before-Work (Multi-Agent Safety)
 
-在写任何实现代码之前：
+Before writing any implementation code:
 
-1. 读 `docs/task/index.md`；对于 `[-]` 项，读详情中的 `owner`。
-2. 如果其他 Agent 拥有进行中的任务，跳过。
-3. 原子认领：
-   - 更新任务索引 `[ ] -> [-]`
-   - 更新任务详情 `status -> in_progress`，设置 `owner`
-   - 如有 TaskUpdate 工具可用，调用 `TaskUpdate(status: "in_progress", owner: "<agent>")`
-4. 认领完全写入后才开始实现。
+1. Read `docs/task/index.md`; for `[-]` items, read detail `owner`.
+2. If another agent owns the in-progress task, skip it.
+3. Claim atomically:
+   - Update task index `[ ] -> [-]`
+   - Update task detail `status -> in_progress`, set `owner`
+   - Call `TaskUpdate(status: "in_progress", owner: "<agent>")` if task tools are available
+4. Start implementation only after the claim is fully written.
 
-完成时：
-- 设置任务索引 `[-] -> [x]`
-- 设置任务详情 `status -> completed`
+On completion:
+- Set task index `[-] -> [x]`
+- Set task detail `status -> completed`
 
-关闭/不做时：
-- 设置任务索引为 `[~]`
-- 设置任务详情 `status -> closed` 并记录原因
+On close/won't do:
+- Set task index to `[~]`
+- Set task detail `status -> closed` and record reason
 
-## 同步规则
+## Sync Rules
 
-任务状态更新立即执行，不延迟。
+Task status updates are immediate, never deferred.
 
-- 主要来源是 `docs/task/` 和 `docs/plan/` 中的文件。
-- 如有 `TaskCreate`/`TaskUpdate` 工具可用，保持工具状态与文件状态同步。
-- 如任务工具不可用，仅使用文件同步，并在进度更新中说明。
+- Primary source is files in `docs/task/` and `docs/plan/`.
+- If `TaskCreate`/`TaskUpdate` tools are available, keep tool state in sync with file state.
+- If task tools are unavailable, continue with file-only sync and state this in the progress update.
 
-会话检查清单：
-1. 会话开始：读 `docs/task/index.md`、活跃任务详情、`docs/plan/index.md`。
-2. 新任务：先创建详情文件，再追加索引行。
-3. 开始工作前：完成认领流程。
-4. 会话结束：验证状态已写入，更新索引头部日期。
+Session checklist:
+1. Session start: read `docs/task/index.md`, active task details, and `docs/plan/index.md`.
+2. New task: create detail file first, then append index line.
+3. Before work: complete Claim-Before-Work.
+4. Session end: verify statuses are written and update index header date.
 
-## Changelog 规范
+## Changelog Conventions
 
-条目格式：
+Entry format:
 
 ```markdown
-## YYYY-MM-DD HH:MM [标签]
+## YYYY-MM-DD HH:MM [tag]
 
-[内容]
+[content in Chinese]
 ```
 
-推荐标签：
-- `[进度]`、`[BUG-P0]`、`[BUG-P1]`、`[踩坑]`、`[决策]`
+Recommended tags:
+- `[进度]`, `[BUG-P0]`, `[BUG-P1]`, `[踩坑]`, `[决策]`
 
-## 项目初始化
+## Project Initialization
 
-首次在项目中使用时：
+On first use in a project:
 
-1. 确保 `docs/task/index.md` 存在（从 [docs/task-format.md](docs/task-format.md) 初始化）。
-2. 确保 `docs/plan/index.md` 存在（从 [docs/plan-format.md](docs/plan-format.md) 初始化）。
-3. 确保 `docs/changelog.md` 存在。
+1. Ensure `docs/task/index.md` exists (initialize from [docs/task-format.md](docs/task-format.md)).
+2. Ensure `docs/plan/index.md` exists (initialize from [docs/plan-format.md](docs/plan-format.md)).
+3. Ensure `docs/changelog.md` exists.
 
-## PR 工作流
+## PR Workflow
 
-### 创建 PR
+### Creating a PR
 
-1. 分析从分支点开始的**完整** commit 历史，不仅是最新 commit。
-2. 使用 `git diff [base-branch]...HEAD` 审查所有改动。
-3. 标题：70 字符以内。
-4. Body 格式：
+1. Analyze **full** commit history from branch point, not just the latest commit.
+2. Use `git diff [base-branch]...HEAD` to review all changes.
+3. Title: under 70 characters, in Chinese.
+4. Body format:
    ```
    ## 概要
-   <1-3 个要点>
+   <1-3 bullet points>
 
    ## 测试计划
-   - [ ] <检查项>
+   - [ ] <checklist items>
    ```
-5. 新分支 push 时使用 `-u` 标志。
+5. Push with `-u` flag if new branch.
 
-### PR 前自动审查
+### Auto-Review Before PR
 
-创建或更新 PR 前自动执行：
+Run these checks automatically before creating or updating a PR:
 
-1. **代码审查** — 审查所有改动文件。
-2. **安全扫描** — 检查硬编码密钥、输入校验、注入漏洞、错误信息泄露。
-3. **构建验证** — 确保构建通过。
-4. **测试** — 运行测试套件，验证无回归。
+1. **Code review** — review all changed files.
+2. **Security scan** — check for hardcoded secrets, input validation, injection vulnerabilities, error message leaks.
+3. **Build verification** — ensure build passes.
+4. **Tests** — run test suite; verify no regressions.
 
-任何检查失败时先修复再创建 PR，不使用 `--no-verify` 跳过。
+If any check fails, fix the issue before creating the PR. Do not skip checks with `--no-verify`.
