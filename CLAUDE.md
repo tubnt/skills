@@ -41,7 +41,6 @@ docs/
   ```
 - *Before starting*: check `tmux has-session -t NAME` first — reuse or restart existing sessions.
 - *NEVER* kill ports as the first approach — manage process lifecycle through tmux.
-- See `/work/ai/rules/tmux-servers.md` for detailed workflow.
 
 ## Git
 - Commit messages、PR titles、PR descriptions 等 Git 元数据使用中文。
