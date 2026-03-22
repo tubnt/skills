@@ -12,10 +12,10 @@ npx skills add tubnt/skills --skill pma --global
 
 ### CLAUDE.md（全局配置）
 
-手动复制到 `~/CLAUDE.md`：
+手动复制到 `~/.claude/CLAUDE.md`：
 
 ```bash
-curl -sL https://raw.githubusercontent.com/tubnt/skills/main/CLAUDE.md -o ~/CLAUDE.md
+curl -sL https://raw.githubusercontent.com/tubnt/skills/main/CLAUDE.md -o ~/.claude/CLAUDE.md
 ```
 
 ## 包含内容

@@ -9,7 +9,7 @@ Practical prompt patterns for the four most common development scenarios.
 npx skills add tubnt/skills --skill pma --global
 
 # Install global config (if repo is private, use gh CLI instead of curl)
-gh api repos/tubnt/skills/contents/CLAUDE.md -q '.content' | base64 -d > ~/CLAUDE.md
+gh api repos/tubnt/skills/contents/CLAUDE.md -q '.content' | base64 -d > ~/.claude/CLAUDE.md
 # Or if repo is public:
 # curl -sL https://raw.githubusercontent.com/tubnt/skills/main/CLAUDE.md -o ~/CLAUDE.md
 ```
