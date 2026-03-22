@@ -1,6 +1,6 @@
 # PMA + CLAUDE.md Prompt Guide
 
-Practical prompt patterns for the four most common development scenarios.
+Practical prompt patterns for the five most common development scenarios.
 
 ## Prerequisites
 
@@ -11,7 +11,7 @@ npx skills add tubnt/skills --skill pma --global
 # Install global config (if repo is private, use gh CLI instead of curl)
 gh api repos/tubnt/skills/contents/CLAUDE.md -q '.content' | base64 -d > ~/.claude/CLAUDE.md
 # Or if repo is public:
-# curl -sL https://raw.githubusercontent.com/tubnt/skills/main/CLAUDE.md -o ~/CLAUDE.md
+# curl -sL https://raw.githubusercontent.com/tubnt/skills/main/CLAUDE.md -o ~/.claude/CLAUDE.md
 ```
 
 ---
@@ -141,6 +141,21 @@ PMA will automatically: investigate → propose → wait for your approval → i
 - 兼容现有 [API/数据结构]
 ```
 
+### Approving and starting implementation
+
+After PMA outputs the proposal (Phase 2), you have three choices:
+
+```
+# Approve and start implementation
+proceed
+
+# Approve with minor adjustments
+proceed，但 [具体调整]
+
+# Request changes to the proposal
+[你的反馈/问题]
+```
+
 ### Tips for better results
 
 | Technique | Example |
@@ -213,6 +228,99 @@ You just write a one-line request. PMA handles:
 
 ---
 
+## Scenario 5: Parallel Development with BKD
+
+Use BKD (AI agent task engine) to split a feature into multiple tasks and execute them in parallel with isolated worktrees. Best for large features that can be decomposed into independent sub-tasks.
+
+### Step 1: Plan and split tasks with PMA
+
+```
+/pma 新增功能：[功能描述]
+
+帮我拆分成可以并行开发的独立子任务，每个子任务要求：
+- 改动范围不重叠（不同文件/模块）
+- 可以独立验证
+- 明确的验收标准
+```
+
+### Step 2: Create BKD project (first time only)
+
+```
+用 BKD 创建项目 [项目名]，工作目录设为当前项目根目录。
+```
+
+### Step 3: Dispatch tasks to BKD agents
+
+```
+把 docs/task/index.md 中的 [任务范围] 分发到 BKD 执行。
+每个任务用独立 worktree（useWorktree=true），避免冲突。
+
+流程：
+1. create-issue（statusId=todo）
+2. follow-up-issue 发送详细需求和约束
+3. update-issue（statusId=working）触发执行
+```
+
+### Step 4: Monitor and review
+
+```
+检查 BKD 所有任务的执行状态。
+对已完成的任务（review 状态）查看 logs，确认质量后移到 done。
+```
+
+### BKD workflow diagram
+
+```
+PMA Plan (Phase 2)
+  ↓ approved
+Split into sub-tasks
+  ↓
+┌─────────────────────────────────────────┐
+│  BKD Issue 1        BKD Issue 2         │
+│  (worktree-a)       (worktree-b)        │
+│  todo → working     todo → working      │
+│  → review           → review            │
+└─────────────────────────────────────────┘
+  ↓ all reviewed
+Merge worktrees → Final verification → done
+```
+
+### Tips for BKD tasks
+
+| Technique | Why |
+|-----------|-----|
+| **Always use `useWorktree=true`** | Prevents agents from stepping on each other's changes |
+| **`create-issue` with `statusId=todo` first** | Allows you to send detailed follow-up before execution starts |
+| **Check `list-processes` before dispatching** | Monitor system load, avoid overloading |
+| **One module per issue** | Minimizes merge conflicts between worktrees |
+| **Include file paths in follow-up** | Reduces agent investigation time |
+
+### Example: Adding multi-language support
+
+```
+# After PMA splits the feature into 3 independent tasks:
+
+用 BKD 并行执行以下任务（都用 worktree）：
+
+1. FEAT-001: 后端 i18n 中间件 + 翻译加载
+   - 改动：internal/middleware/i18n.go, internal/config/
+   - 验收：API 响应根据 Accept-Language 返回对应语言
+
+2. FEAT-002: 前端 i18n 框架集成 + 中英文翻译文件
+   - 改动：pwf-admin/src/i18n/, pwf-admin/src/App.vue
+   - 验收：切换语言后所有页面文本正确显示
+
+3. FEAT-003: 支付页多语言 + 自动检测
+   - 改动：pwf-pay/src/
+   - 验收：支付页根据浏览器语言自动切换
+
+每个任务的 follow-up 要包含具体文件路径和现有代码模式的参考。
+```
+
+> **Key point**: PMA handles planning and quality control. BKD handles parallel execution. Use PMA to split tasks intelligently, then dispatch to BKD. After all BKD issues are in `review`, merge and do a final PMA verification pass.
+
+---
+
 ## Anti-Patterns to Avoid
 
 | Don't | Do instead |
@@ -221,8 +329,10 @@ You just write a one-line request. PMA handles:
 | `改一下那个 bug` (no context) | Provide symptoms, errors, reproduction steps |
 | `把代码优化一下` (open-ended) | Specify what to optimize and the target metric |
 | Skip PMA and jump to code | Always let PMA investigate first — it catches things you'd miss |
-| Give PMA step-by-step tool instructions | PMA knows how to use Serena/Grep/etc. Just describe _what_ you want |
+| Give PMA step-by-step tool instructions | PMA knows how to use its tools. Just describe _what_ you want |
 | Write a 500-word prompt | Keep it concise. Context > verbosity |
+| Create BKD issues with `statusId=working` | Always `todo` first, then `follow-up-issue`, then `working` |
+| Dispatch overlapping file scopes to BKD | One module per issue to avoid merge conflicts |
 
 ---
 
@@ -240,4 +350,9 @@ You just write a one-line request. PMA handles:
 # - docs/task/index.md (task status)
 # - docs/plan/PLAN-NNN.md (if non-trivial)
 # - docs/changelog.md (if needed)
+
+# For parallel execution, dispatch to BKD after PMA planning:
+# create-issue (todo) → follow-up-issue (details) → update-issue (working)
+# Monitor: list-processes / get-issue-logs
+# Review: move to "review" → human confirms → "done"
 ```
