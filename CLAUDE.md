@@ -1,8 +1,8 @@
 ## Agent Rules
 
-- 所有输出（文档、代码注释、commit message、PR 描述）默认使用中文。
-- 与用户沟通使用中文。
-- 禁止在任何远程可见内容中提及 AI 助手、Agent 或协作者模型名称。
+- All output (docs, code comments, commit messages, PR descriptions) MUST be in Chinese by default.
+- Communicate with the user in Chinese.
+- Do not mention AI assistants, agents, or collaborator model names in any remote-visible content.
 
 ## Project Preferences
 
@@ -14,18 +14,20 @@
 - Frontend/backend API docs live in code as source of truth. When adding/modifying APIs, update both sides together.
 - Human-authored project docs (requirements, design, etc.) are maintained by the user. AI may add implementation status annotations only with confirmation.
 
-## 技术偏好
+## Technical Preferences
 
-- 部署优先级：docker compose > docker run > 裸机
-- 本地编译，部署产物到服务器，**禁止在远程服务器上编译**
+- Deployment priority: docker compose > docker run > bare metal.
+- Compile locally, deploy artifacts to server. **Never compile on remote servers.**
 
 ## Shell
+
 - Prefer `bash` for all command execution.
 - Do not use `zsh` unless the user explicitly requests it.
 - When a tool supports explicit shell selection, set it to `bash`.
 - *NEVER* use `kill $(lsof -ti:PORT)` without filtering — it kills ALL processes on that port, including Claude Code itself. If you must kill by port, use `kill $(lsof -ti:PORT -sTCP:LISTEN)` or `fuser -k PORT/tcp`.
 
 ## Tmux Server Management
+
 - *ALWAYS* use tmux to run dev servers, test servers, and long-running processes.
 - Session name: `{project_dir_basename}-{path_hash}` — generate with:
   ```bash
@@ -35,47 +37,48 @@
 - *NEVER* kill ports as the first approach — manage process lifecycle through tmux.
 
 ## Git
-- Commit messages、PR titles、PR descriptions 等 Git 元数据使用中文。
-- Conventional commits 格式：`<type>: <中文描述>`（type 用英文：feat, fix, refactor, docs, test, chore, perf, ci）。
-- 禁止在 commit、PR、评论等远程可见内容中提及 AI 助手或模型名称（Codex、Claude、ChatGPT、OpenAI、Anthropic 等）。
 
-## 安全
+- Commit messages, PR titles, PR descriptions, and all remote-visible Git metadata MUST be in Chinese.
+- Conventional commits format: `<type>: <Chinese description>` (type in English: feat, fix, refactor, docs, test, chore, perf, ci).
+- Do not mention AI assistants or model names (Codex, Claude, ChatGPT, OpenAI, Anthropic, etc.) in any remote-visible content.
 
-1. 所有密钥/密码/Token 存入 `.env`，禁止硬编码；新增时同步更新 `.env.example`
-2. 绝不在文档或日志中记录密钥、密码。发现安全漏洞立即报告
-3. **禁止弱密码**——任何场景都必须使用 `openssl rand -base64 24` 或等效方式生成随机强密码
+## Security
 
-## 大文件处理
+1. All secrets/passwords/tokens go in `.env`, never hardcoded. Update `.env.example` when adding new ones.
+2. Never log or document secrets or passwords. Report security vulnerabilities immediately.
+3. **No weak passwords** — always use `openssl rand -base64 24` or equivalent to generate strong random passwords.
 
-- 读取大文件时，使用 Read 工具的 offset 和 limit 参数分段读取
-- 优先使用 Grep 搜索特定内容，而非读取整个文件
-- 单个文件超过 1000 行时，先用 Grep 定位目标区域再分段读取
+## Large File Handling
 
-## UI 组件规范
+- When reading large files, use the Read tool's offset and limit parameters for chunked reads.
+- Prefer Grep to search for specific content rather than reading entire files.
+- For files over 1000 lines, use Grep to locate target regions before reading chunks.
 
-所有 UI 交互组件（Dialog、Dropdown、Select、Tabs、Tooltip、Popover 等）必须使用成熟的 headless UI 库实现，禁止从零手写。不要手写 focus trap、scroll lock、ARIA 属性管理、键盘导航等底层逻辑。仅当库中确实没有对应组件且无社区替代时才允许手动实现，并在注释中说明原因。
+## UI Component Rules
 
-## AIssh 服务器操作规则
+All UI interactive components (Dialog, Dropdown, Select, Tabs, Tooltip, Popover, etc.) must use mature headless UI libraries. Do not hand-write focus trap, scroll lock, ARIA management, or keyboard navigation. Only implement manually when no library or community alternative exists, and document the reason in a comment.
 
-所有涉及远程服务器的操作（部署、重启、配置、日志、Docker 等），**必须通过 AIssh MCP 执行**，禁止通过本地 Bash 的 ssh/scp/rsync 直接连接。
+## AIssh Server Operations
 
-### 操作流程
-1. 先执行 `servers_list` 获取可用服务器及其 notes 备注
-2. 根据 notes 匹配目标服务器（生产/测试/构建）；notes 不清晰时先向用户确认
-3. `exec_run` 执行命令 / `file_deploy` 部署文件 / `file_fetch` 下载文件
-4. `exec_run` 的 `reason` 字段必须填写
-5. `file_deploy` 需先暂存：`curl -s -F 'file=@本地路径' -H 'Authorization: Bearer <token>' https://<域名>/mcp/upload` 获取 `file_ref`，再调用 `file_deploy`
+All remote server operations (deploy, restart, config, logs, Docker, etc.) **MUST go through AIssh MCP**. Do not use local Bash ssh/scp/rsync.
 
-### 禁止事项
-- **禁止在远程服务器上编译**——所有编译在本地完成，通过 `file_deploy` 部署产物
-- **禁止通过 exec_run 写入文件**（如 `echo ... | base64 -d > file`），文件传输必须用 `file_deploy`
-- 破坏性命令执行前先向用户确认
+### Workflow
+1. Run `servers_list` to get available servers and their notes.
+2. Match target server by notes (production/test/build). Ask user to confirm if notes are unclear.
+3. Use `exec_run` for commands / `file_deploy` for files / `file_fetch` for downloads.
+4. `exec_run` requires a `reason` field.
+5. `file_deploy` requires staging first: `curl -s -F 'file=@<local_path>' -H 'Authorization: Bearer <token>' https://<domain>/mcp/upload` to get `file_ref`, then call `file_deploy`.
 
-## 问题分级
+### Prohibited
+- **Never compile on remote servers** — compile locally, deploy artifacts via `file_deploy`.
+- **Never write files via exec_run** (e.g. `echo ... | base64 -d > file`). Use `file_deploy` for file transfers.
+- Confirm with user before running destructive commands.
 
-| 级别 | 定义 | 处理 |
-|------|------|------|
-| P0 | 生产故障/安全漏洞 | 立即报告，等确认 |
-| P1 | 核心功能异常 | 报告方案，等确认 |
-| P2 | 次要功能问题 | 自动修复 |
-| P3 | 体验优化 | 自动修复 |
+## Issue Severity
+
+| Level | Definition | Action |
+|-------|------------|--------|
+| P0 | Production outage / security vulnerability | Report immediately, wait for confirmation |
+| P1 | Core feature broken | Report with proposal, wait for confirmation |
+| P2 | Minor feature issue | Auto-fix |
+| P3 | UX improvement | Auto-fix |
