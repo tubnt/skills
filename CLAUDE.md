@@ -8,19 +8,11 @@
 
 - If a project uses the *PMA skill* for management, strictly follow the PMA workflow (investigate -> proposal -> implement). Do not skip phases or bypass the file-based task tracking process.
 
-## 文档系统（PMA 项目通用）
+## Documentation Rules
 
-```
-docs/
-├── 需求文档.md    # 人主导，AI 可添加实现状态标注（需确认）
-├── 产品设计.md    # 人主导，AI 可添加实现差异标注（需确认）
-├── api.md         # 对外 API 文档（如有）
-├── plan/          # PMA 方案追踪（PLAN-NNN.md）
-└── task/          # PMA 任务追踪（PREFIX-NNN.md）
-```
-
-- 禁止创建总结.md、报告.md 等无用文档。临时文件放 `./tmp/`
-- 前后端 API 不单独建文档，以代码为事实源。新增/修改接口时前后端必须同步改动
+- Do not create unnecessary doc files (e.g. summary.md, report.md). Temporary files go to `./tmp/`.
+- Frontend/backend API docs live in code as source of truth. When adding/modifying APIs, update both sides together.
+- Human-authored project docs (requirements, design, etc.) are maintained by the user. AI may add implementation status annotations only with confirmation.
 
 ## 技术偏好
 
