@@ -8,8 +8,10 @@ Practical prompt patterns for the four most common development scenarios.
 # Install PMA skill
 npx skills add tubnt/skills --skill pma --global
 
-# Install global config
-curl -sL https://raw.githubusercontent.com/tubnt/skills/main/CLAUDE.md -o ~/CLAUDE.md
+# Install global config (if repo is private, use gh CLI instead of curl)
+gh api repos/tubnt/skills/contents/CLAUDE.md -q '.content' | base64 -d > ~/CLAUDE.md
+# Or if repo is public:
+# curl -sL https://raw.githubusercontent.com/tubnt/skills/main/CLAUDE.md -o ~/CLAUDE.md
 ```
 
 ---
@@ -99,12 +101,13 @@ curl -sL https://raw.githubusercontent.com/tubnt/skills/main/CLAUDE.md -o ~/CLAU
 ### Step 4: Populate project memory (if using .claude/memory/)
 
 ```
-把你对这个项目的理解写入 .claude/memory/：
+把你对这个项目的理解写入项目根目录下的 .claude/memory/：
 - MEMORY.md — 项目概述索引
 - backend-patterns.md — 后端规范和踩坑
 - frontend-patterns.md — 前端规范和踩坑
 
-只写模型猜不到的项目特有知识，不要写能从代码推断的东西。
+只写模型猜不到的项目特有知识（踩坑、架构决策、部署细节），
+不要写能从代码推断的东西（文件结构、函数签名等）。
 ```
 
 > **Key point**: Give AI exploration time before asking it to produce anything. The quality of generated docs depends on how well it understands the codebase.
@@ -230,7 +233,7 @@ You just write a one-line request. PMA handles:
 /pma [一句话描述任务]
 
 # PMA will ask you to confirm before implementing.
-# Type "proceed" or "继续" to approve.
+# Type "proceed" to approve.
 # Type feedback to refine the proposal.
 
 # After completion, PMA updates:
