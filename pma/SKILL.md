@@ -82,10 +82,12 @@ Before writing any implementation code:
 On completion:
 - Set task index `[-] -> [x]`
 - Set task detail `status -> completed`
+- Call `TaskUpdate(status: "completed")` if task tools are available
 
 On close/won't do:
 - Set task index to `[~]`
 - Set task detail `status -> closed` and record reason
+- Call `TaskUpdate(status: "deleted")` if task tools are available
 
 ## Sync Rules
 
@@ -100,6 +102,26 @@ Session checklist:
 2. New task: create detail file first, then append index line.
 3. Before work: complete Claim-Before-Work.
 4. Session end: verify statuses are written and update index header date.
+
+## Documentation System
+
+Canonical structure:
+
+```text
+docs/
+├── task/
+│   ├── index.md
+│   └── PREFIX-NNN.md
+├── plan/
+│   ├── index.md
+│   └── PLAN-NNN.md
+├── architecture.md
+└── changelog.md
+```
+
+- Use Chinese template sections for Chinese-language projects while keeping filenames in English.
+- Write investigation findings into the plan context section.
+- Do not create extra report files; temporary files go to `./tmp/`.
 
 ## Changelog Conventions
 
@@ -147,5 +169,36 @@ Run these checks automatically before creating or updating a PR:
 2. **Security scan** — check for hardcoded secrets, input validation, injection vulnerabilities, error message leaks.
 3. **Build verification** — ensure build passes.
 4. **Tests** — run test suite; verify no regressions.
+5. **Lint** — ensure lint passes with no errors.
 
 If any check fails, fix the issue before creating the PR. Do not skip checks with `--no-verify`.
+
+### PR Review Checklist
+
+Before marking a PR ready for review:
+
+- [ ] All auto-review checks pass (code review, security, build, lint, tests)
+- [ ] Commit history is clean (no WIP, fixup, or merge commits)
+- [ ] PR description accurately reflects all changes
+- [ ] Task status updated in `docs/task/index.md`
+- [ ] Plan status updated in `docs/plan/index.md` (if applicable)
+- [ ] Changelog updated (if user-facing change)
+
+## CI Pipeline
+
+### Standard Stages
+
+```
+lint → typecheck → build → test → security-scan
+```
+
+All stages must pass before a PR can be merged. Stages run in parallel where possible.
+
+### CI Rules
+
+- **Never** skip CI checks to unblock a merge.
+- **Never** add `[skip ci]` to commit messages unless explicitly requested.
+- If CI fails, fix the root cause locally before pushing again — do not iterate by pushing repeated fix attempts.
+- Keep CI fast: target under 5 minutes for the full pipeline.
+- Secrets in CI use environment secrets, never hardcoded.
+- Use `gh run view` or `gh run watch` to check CI status from the terminal.
