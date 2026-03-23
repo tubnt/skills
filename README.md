@@ -15,7 +15,7 @@ npx skills add tubnt/skills --skill pma --global
 手动复制到 `~/.claude/CLAUDE.md`：
 
 ```bash
-curl -sL https://raw.githubusercontent.com/tubnt/skills/main/CLAUDE.md -o ~/.claude/CLAUDE.md
+gh api repos/tubnt/skills/contents/CLAUDE.md --jq '.content' | base64 -d > ~/.claude/CLAUDE.md
 ```
 
 ## 包含内容
