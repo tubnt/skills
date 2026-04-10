@@ -15,6 +15,7 @@ done
 ### 单独安装
 
 ```bash
+npx skills add zzci/skills --skill bkd --global
 npx skills add tubnt/skills --skill pma --global
 npx skills add tubnt/skills --skill pma-bun --global
 npx skills add tubnt/skills --skill pma-go --global
